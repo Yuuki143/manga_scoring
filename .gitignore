@@ -45,3 +45,8 @@ Thumbs.db
 htmlcov/
 .coverage
 .coverage.*
+
+# Real data files (NEVER commit)
+data/
+*.csv
+!backend/sample_data/*.csv
