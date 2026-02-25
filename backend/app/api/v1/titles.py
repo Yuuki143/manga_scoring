@@ -26,6 +26,7 @@ from app.models.publisher import Publisher, PublisherTier
 from app.models.sales_data import SalesData
 from app.models.score import TitleScore
 from app.models.title import Title
+from app.models.user import User
 from app.schemas.affinity import AffinityResponse, AffinityTitle
 from app.schemas.global_potential import GlobalPotentialResponse, RegionPotential
 from app.schemas.score import ScoreResponse
@@ -116,6 +117,60 @@ def _get_cached_score(title_id: int, db: Session) -> Optional[TitleScore]:
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@router.get("", summary="List titles for current publisher")
+async def list_titles(
+    page: int = 1,
+    page_size: int = 50,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    from app.models.title import Title
+    from app.models.score import TitleScore
+    titles = (
+        db.query(Title)
+        .filter(Title.publisher_id == current_user.publisher_id)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    result = []
+    for t in titles:
+        score_row = db.query(TitleScore).filter(TitleScore.title_id == t.id).first()
+        result.append({
+            "title_id": t.id,
+            "title_name": t.name,
+            "publisher_id": t.publisher_id,
+            "genre": t.genre.value if t.genre else None,
+            "status": t.status.value if t.status else None,
+            "overall_score": score_row.overall_score if score_row else None,
+            "confidence_rating": score_row.confidence_rating.value if score_row and score_row.confidence_rating else None,
+        })
+    return result
+
+
+@router.get("/{title_id}", summary="Get title details")
+async def get_title(
+    title_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    from app.models.title import Title
+    title = db.query(Title).filter(Title.id == title_id).first()
+    if not title:
+        raise HTTPException(status_code=404, detail="Title not found")
+    return {
+        "title_id": title.id,
+        "title_name": title.name,
+        "publisher_id": title.publisher_id,
+        "genre": title.genre.value if title.genre else None,
+        "genre_label": title.genre.value if title.genre else None,
+        "status": title.status.value if title.status else None,
+        "author": title.author,
+        "name_en": title.name_en,
+        "has_anime": title.has_anime,
+    }
 
 
 @router.get(
@@ -293,9 +348,12 @@ async def get_title_trend(
 
     data_points: list[TrendDataPoint] = []
     for row in rows:
-        # date_trunc returns a datetime; normalise to a date
+        # date_trunc returns a datetime on PG but a string on SQLite
         month_dt = row.month
-        if hasattr(month_dt, "date"):
+        if isinstance(month_dt, str):
+            from datetime import datetime as _dt
+            month_date = _dt.strptime(month_dt[:10], "%Y-%m-%d").date()
+        elif hasattr(month_dt, "date"):
             month_date = month_dt.date()
         else:
             month_date = month_dt

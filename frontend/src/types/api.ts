@@ -65,9 +65,15 @@ export interface GenreRankingResponse {
 // ============================================================
 
 export interface AffinityTitle {
-  title_id: number;
-  title_name: string;
-  affinity_score: number;
+  title_id?: number;
+  title_name?: string;
+  anonymous_label?: string;
+  is_own_title: boolean;
+  similarity_score: number;
+  shared_reader_ratio?: number;
+  genre: string;
+  // Aliases for frontend compatibility
+  affinity_score?: number;
   shared_audience_pct?: number;
   publisher?: string;
 }
@@ -85,8 +91,11 @@ export interface AffinityResponse {
 
 export interface RegionPotential {
   region: string;
-  region_label: string;
+  region_label?: string;
   potential_score: number;
+  market_size_indicator?: string;
+  license_recommendation?: string;
+  anime_viewership?: number;
   market_readiness?: number;
   estimated_audience_size?: number;
   recommended_platforms?: string[];
@@ -95,8 +104,13 @@ export interface RegionPotential {
 export interface GlobalPotentialResponse {
   title_id: number;
   title_name: string;
-  global_potential_score: number;
-  region_breakdown: RegionPotential[];
+  overall_global_score: number;
+  regions: RegionPotential[];
+  has_anime: boolean;
+  anime_impact_multiplier?: number;
+  // Aliases
+  global_potential_score?: number;
+  region_breakdown?: RegionPotential[];
   recommended_markets?: string[];
   localization_notes?: string;
 }
@@ -105,23 +119,19 @@ export interface GlobalPotentialResponse {
 // Alert Types
 // ============================================================
 
-export type AlertSeverity = 'critical' | 'warning' | 'info';
-export type AlertType =
-  | 'rank_drop'
-  | 'revenue_spike'
-  | 'engagement_drop'
-  | 'competitor_surge'
-  | 'milestone'
-  | 'anomaly';
+export type AlertSeverity = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'critical' | 'warning' | 'info';
+export type AlertType = string;
 
 export interface AlertResponse {
-  alert_id: number;
+  id: number;
+  alert_id?: number;
   title_id?: number;
   title_name?: string;
   alert_type: AlertType;
   severity: AlertSeverity;
   message: string;
   detail?: string;
+  data?: Record<string, unknown>;
   created_at: string;
   read_at?: string;
   is_read: boolean;
@@ -132,7 +142,8 @@ export interface AlertListResponse {
   alerts: AlertResponse[];
   total: number;
   page: number;
-  page_size: number;
+  per_page: number;
+  pages: number;
   unread_count: number;
 }
 
@@ -163,12 +174,15 @@ export interface PredictionResponse {
 // ============================================================
 
 export interface UploadResponse {
-  upload_id: string;
-  filename: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  upload_id?: string;
+  filename?: string;
+  status: string;
+  records_processed?: number;
+  records_accepted?: number;
+  records_rejected?: number;
   rows_processed?: number;
   rows_failed?: number;
-  created_at: string;
+  created_at?: string;
   completed_at?: string;
   errors?: string[];
 }
@@ -183,9 +197,14 @@ export interface TitleResponse {
   publisher_id: number;
   genre: string;
   genre_label?: string;
-  status: 'active' | 'hiatus' | 'completed';
+  status?: string;
+  overall_score?: number;
+  confidence_rating?: string;
+  author?: string;
+  name_en?: string;
+  has_anime?: boolean;
   platform_ids?: number[];
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
 }
 
@@ -202,7 +221,7 @@ export interface AuthTokenResponse {
 export interface PublisherInfo {
   publisher_id: number;
   publisher_name: string;
-  tier: 'basic' | 'standard' | 'enterprise';
+  tier: string;
   title_count: number;
 }
 

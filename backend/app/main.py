@@ -9,6 +9,22 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.api.v1.router import api_router
+from app.database import engine, Base
+
+# Register SQLite-compatible date_trunc when using SQLite
+if settings.DATABASE_URL.startswith("sqlite"):
+    from sqlalchemy import event
+
+    @event.listens_for(engine, "connect")
+    def _register_sqlite_functions(dbapi_conn, connection_record):
+        dbapi_conn.create_function(
+            "date_trunc", 2,
+            lambda part, val: val[:7] + "-01" if part == "month" and val else val,
+        )
+
+# Ensure all tables exist (for SQLite / first-run convenience)
+import app.models  # noqa: F401  – register all models
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.APP_NAME,

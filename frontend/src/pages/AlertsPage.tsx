@@ -23,9 +23,14 @@ const AlertsPage: React.FC = () => {
     try {
       const unreadOnly = filterRead === 'UNREAD' ? true : undefined;
       const res = await alertApi.getAlerts(pageNum, PAGE_SIZE, unreadOnly);
-      setAlerts(res.data.alerts);
-      setTotal(res.data.total);
-      setUnreadCount(res.data.unread_count);
+      // Normalize severity to lowercase for frontend display
+      const normalized = (res.data.alerts || []).map((a: AlertResponse) => ({
+        ...a,
+        severity: (a.severity || '').toLowerCase().replace('high', 'critical').replace('medium', 'warning').replace('low', 'info') as AlertResponse['severity'],
+      }));
+      setAlerts(normalized);
+      setTotal(res.data.total || 0);
+      setUnreadCount(res.data.unread_count ?? normalized.filter((a: AlertResponse) => !a.is_read).length);
     } catch (err) {
       setError('アラートデータの読み込みに失敗しました。');
       console.error(err);
@@ -48,7 +53,7 @@ const AlertsPage: React.FC = () => {
       await alertApi.markRead(alertId);
       setAlerts((prev) =>
         prev.map((a) =>
-          a.alert_id === alertId ? { ...a, is_read: true, read_at: new Date().toISOString() } : a
+          a.id === alertId ? { ...a, is_read: true, read_at: new Date().toISOString() } : a
         )
       );
       setUnreadCount((c) => Math.max(0, c - 1));
@@ -217,10 +222,10 @@ const AlertsPage: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {filteredAlerts.map((alert, idx) => (
               <AlertItem
-                key={alert.alert_id}
+                key={alert.id}
                 alert={alert}
                 onMarkRead={handleMarkRead}
-                onTitleClick={alert.title_id ? () => navigate(`/title/${alert.title_id}`) : undefined}
+                onTitleClick={alert.data?.title_id ? () => navigate(`/title/${alert.data?.title_id}`) : undefined}
                 isLast={idx === filteredAlerts.length - 1}
               />
             ))}
@@ -336,7 +341,7 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, onMarkRead, onTitleClick, 
           {!alert.is_read && (
             <button
               className="btn btn-ghost btn-sm"
-              onClick={() => onMarkRead(alert.alert_id)}
+              onClick={() => onMarkRead(alert.id)}
               style={{ fontSize: '0.6875rem', color: 'var(--color-text-muted)', padding: '0.25rem 0.5rem' }}
             >
               <CheckIcon size={12} />

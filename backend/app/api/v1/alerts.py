@@ -20,8 +20,10 @@ from sqlalchemy.orm import Session
 from app.auth.audit import log_action
 from app.auth.dependencies import get_current_user
 from app.database import get_db
+from app.models.alert import Alert
 from app.models.publisher import Publisher
 from app.models.title import Title
+from app.models.user import User
 from app.schemas.alert import AlertListResponse, AlertResponse
 from app.schemas.common import AlertType as SchemaAlertType
 from app.services.alert_service import AlertService
@@ -163,10 +165,45 @@ async def list_alerts(
         },
     )
 
+    unread_count = db.query(Alert).filter(
+        Alert.publisher_id == publisher.id,
+        Alert.is_read == False,
+    ).count()
+
     return AlertListResponse(
         total=result["total"],
         page=result["page"],
         per_page=result["per_page"],
         pages=result["pages"],
         alerts=alert_responses,
+        unread_count=unread_count,
     )
+
+
+@router.patch("/{alert_id}/read", summary="Mark alert as read")
+async def mark_read(
+    alert_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    from app.models.alert import Alert
+    alert = db.query(Alert).filter(Alert.id == alert_id, Alert.publisher_id == current_user.publisher_id).first()
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    alert.is_read = True
+    db.commit()
+    return {"id": alert.id, "is_read": True}
+
+
+@router.patch("/read-all", summary="Mark all alerts as read")
+async def mark_all_read(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    from app.models.alert import Alert
+    db.query(Alert).filter(
+        Alert.publisher_id == current_user.publisher_id,
+        Alert.is_read == False,
+    ).update({"is_read": True})
+    db.commit()
+    return {"status": "ok"}

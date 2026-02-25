@@ -18,3 +18,4 @@ class AlertResponse(BaseModel):
 
 class AlertListResponse(PaginatedResponse):
     alerts: list[AlertResponse]
+    unread_count: int = 0

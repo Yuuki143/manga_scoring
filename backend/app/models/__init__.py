@@ -16,6 +16,7 @@ from app.models.base import BaseModel, TimestampMixin
 from app.models.genre_trend import GenreTrend, TrendingDirection
 from app.models.platform_data import PlatformData
 from app.models.publisher import DataProvisionFrequency, Publisher, PublisherTier
+from app.models.ranking_data import RankingData
 from app.models.sales_data import DataSource, SalesData
 from app.models.score import ConfidenceRating, TitleScore
 from app.models.title import Genre, Title, TitleStatus
@@ -52,6 +53,8 @@ __all__ = [
     # GenreTrend
     "GenreTrend",
     "TrendingDirection",
+    # RankingData
+    "RankingData",
     # AuditLog
     "AuditLog",
 ]

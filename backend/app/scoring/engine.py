@@ -182,7 +182,7 @@ class ScoringEngine:
             title_revenue_row = self.db.execute(
                 select(func.coalesce(func.sum(SalesData.revenue), 0.0)).where(
                     SalesData.title_id == title_id,
-                    SalesData.sale_date >= cutoff,
+                    SalesData.period_start >= cutoff,
                 )
             ).scalar()
             title_revenue = float(title_revenue_row or 0.0)
@@ -193,7 +193,7 @@ class ScoringEngine:
                     SalesData.title_id,
                     func.sum(SalesData.revenue).label("total_revenue"),
                 )
-                .where(SalesData.sale_date >= cutoff)
+                .where(SalesData.period_start >= cutoff)
                 .group_by(SalesData.title_id)
             ).all()
 
@@ -233,12 +233,12 @@ class ScoringEngine:
             cutoff_12m = today - timedelta(days=365)
             rows = self.db.execute(
                 select(
-                    func.date_trunc("month", SalesData.sale_date).label("month"),
+                    func.date_trunc("month", SalesData.period_start).label("month"),
                     func.sum(SalesData.revenue).label("revenue"),
                 )
                 .where(
                     SalesData.title_id == title_id,
-                    SalesData.sale_date >= cutoff_12m,
+                    SalesData.period_start >= cutoff_12m,
                 )
                 .group_by("month")
                 .order_by("month")
@@ -375,18 +375,18 @@ class ScoringEngine:
                 cutoff = date.today() - timedelta(days=365)
                 rows = self.db.execute(
                     select(
-                        SalesData.platform,
+                        SalesData.platform_name,
                         func.sum(SalesData.revenue).label("revenue"),
                     )
                     .where(
                         SalesData.title_id == title_id,
-                        SalesData.sale_date >= cutoff,
+                        SalesData.period_start >= cutoff,
                     )
-                    .group_by(SalesData.platform)
+                    .group_by(SalesData.platform_name)
                 ).all()
                 for r in rows:
-                    if r.platform:
-                        platform_revenues[r.platform] = float(r.revenue or 0.0)
+                    if r.platform_name:
+                        platform_revenues[r.platform_name] = float(r.revenue or 0.0)
 
             # Supplement with PlatformData platforms (may carry engagement metrics
             # even when direct revenue rows are absent)
@@ -448,12 +448,12 @@ class ScoringEngine:
         try:
             rows = self.db.execute(
                 select(
-                    func.date_trunc("month", SalesData.sale_date).label("month"),
+                    func.date_trunc("month", SalesData.period_start).label("month"),
                     func.sum(SalesData.revenue).label("revenue"),
                 )
                 .where(
                     SalesData.title_id == title_id,
-                    SalesData.sale_date >= cutoff,
+                    SalesData.period_start >= cutoff,
                 )
                 .group_by("month")
                 .order_by("month")
@@ -555,7 +555,7 @@ class ScoringEngine:
                 count = self.db.execute(
                     select(func.count()).where(
                         SalesData.title_id == title_id,
-                        SalesData.sale_date >= cutoff,
+                        SalesData.period_start >= cutoff,
                     )
                 ).scalar()
                 if (count or 0) > 0:
@@ -570,7 +570,7 @@ class ScoringEngine:
                 count = self.db.execute(
                     select(func.count()).where(
                         SalesData.title_id == title_id,
-                        SalesData.sale_date >= cutoff,
+                        SalesData.period_start >= cutoff,
                     )
                 ).scalar()
                 if (count or 0) >= 2:
@@ -582,7 +582,7 @@ class ScoringEngine:
         if SalesData is not None:
             try:
                 platforms = self.db.execute(
-                    select(SalesData.platform)
+                    select(SalesData.platform_name)
                     .where(SalesData.title_id == title_id)
                     .distinct()
                 ).scalars().all()
@@ -608,11 +608,11 @@ class ScoringEngine:
                 cutoff = date.today() - timedelta(days=365)
                 rows = self.db.execute(
                     select(
-                        func.date_trunc("month", SalesData.sale_date).label("month")
+                        func.date_trunc("month", SalesData.period_start).label("month")
                     )
                     .where(
                         SalesData.title_id == title_id,
-                        SalesData.sale_date >= cutoff,
+                        SalesData.period_start >= cutoff,
                     )
                     .group_by("month")
                 ).all()

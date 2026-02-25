@@ -93,6 +93,29 @@ async def login(
     return Token(access_token=token, token_type="bearer")
 
 
+@router.get(
+    "/me",
+    summary="Get current user and publisher info",
+)
+async def me(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    publisher: Publisher | None = (
+        db.query(Publisher).filter(Publisher.id == current_user.publisher_id).first()
+    )
+    title_count = 0
+    if publisher:
+        from app.models.title import Title
+        title_count = db.query(Title).filter(Title.publisher_id == publisher.id).count()
+    return {
+        "publisher_id": current_user.publisher_id,
+        "publisher_name": publisher.name if publisher else "Unknown",
+        "tier": publisher.tier.value.lower() if publisher else "basic",
+        "title_count": title_count,
+    }
+
+
 @router.post(
     "/register",
     response_model=UserResponse,

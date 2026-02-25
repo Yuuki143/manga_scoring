@@ -321,7 +321,7 @@ class HitPredictor:
                     SalesData.title_id,
                     func.sum(SalesData.revenue).label("total_revenue"),
                 )
-                .where(SalesData.sale_date >= cutoff_12m)
+                .where(SalesData.period_start >= cutoff_12m)
                 .group_by(SalesData.title_id)
             ).all()
         except Exception:
@@ -436,7 +436,7 @@ class HitPredictor:
                     SalesData.title_id,
                     func.sum(SalesData.revenue).label("total_revenue"),
                 )
-                .where(SalesData.sale_date >= cutoff_12m)
+                .where(SalesData.period_start >= cutoff_12m)
                 .group_by(SalesData.title_id)
             ).all()
         except Exception:
@@ -532,8 +532,8 @@ class HitPredictor:
         result = self.db.execute(
             select(func.coalesce(func.sum(SalesData.revenue), 0.0)).where(
                 SalesData.title_id == title_id,
-                SalesData.sale_date >= from_date,
-                SalesData.sale_date < to_date,
+                SalesData.period_start >= from_date,
+                SalesData.period_start < to_date,
             )
         ).scalar()
         return float(result or 0.0)

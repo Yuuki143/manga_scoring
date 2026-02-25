@@ -62,6 +62,12 @@ def _get_cached_score(title_id: int, db: Session) -> Optional[TitleScore]:
     )
 
 
+@router.get("", summary="List available genres")
+async def list_genres() -> list[dict]:
+    from app.models.title import Genre
+    return [{"genre": g.value, "label": g.value} for g in Genre]
+
+
 @router.get(
     "/{genre}/ranking",
     response_model=GenreRankingResponse,

@@ -55,7 +55,8 @@ const DashboardPage: React.FC = () => {
       // Fetch predictions
       try {
         const predRes = await predictionApi.getPredictions();
-        setPredictions(predRes.data.predictions.slice(0, 5));
+        const preds = Array.isArray(predRes.data) ? predRes.data : (predRes.data as any).predictions || [];
+        setPredictions(preds.slice(0, 5));
       } catch {
         // predictions optional
       }

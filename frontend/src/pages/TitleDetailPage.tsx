@@ -349,22 +349,22 @@ const TitleDetailPage: React.FC = () => {
                     <div key={t.title_id} style={affinityStyles.item}>
                       <div style={affinityStyles.rank}>{i + 1}</div>
                       <div style={affinityStyles.info}>
-                        <p style={affinityStyles.titleName}>{t.title_name}</p>
+                        <p style={affinityStyles.titleName}>{(t.title_name ?? t.anonymous_label ?? 'Unknown')}</p>
                         {t.publisher && (
                           <p style={affinityStyles.publisher}>{t.publisher}</p>
                         )}
                       </div>
                       <div style={affinityStyles.right}>
-                        {t.shared_audience_pct !== undefined && (
+                        {(t.shared_reader_ratio ?? t.shared_audience_pct) !== undefined && (
                           <div style={affinityStyles.audienceBar}>
                             <span style={affinityStyles.audienceLabel}>
-                              共有読者 {Math.round(t.shared_audience_pct * 100)}%
+                              共有読者 {Math.round(((t.shared_reader_ratio ?? t.shared_audience_pct) || 0) * 100)}%
                             </span>
                             <div className="progress-bar-track" style={{ width: '80px' }}>
                               <div
                                 className="progress-bar-fill"
                                 style={{
-                                  width: `${t.shared_audience_pct * 100}%`,
+                                  width: `${((t.shared_reader_ratio ?? t.shared_audience_pct) || 0) * 100}%`,
                                   background: 'var(--color-secondary)',
                                 }}
                               />
@@ -373,7 +373,7 @@ const TitleDetailPage: React.FC = () => {
                         )}
                         <div style={affinityStyles.affinityScore}>
                           <span style={affinityStyles.affinityNum}>
-                            {Math.round(t.affinity_score * 100)}%
+                            {Math.round((t.similarity_score ?? t.affinity_score ?? 0) * 100)}%
                           </span>
                           <span style={affinityStyles.affinityLabel}>類似度</span>
                         </div>
@@ -405,7 +405,7 @@ const TitleDetailPage: React.FC = () => {
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-accent)' }}>
-                        {Math.round(global.global_potential_score)}
+                        {Math.round((global.overall_global_score ?? global.global_potential_score ?? 0))}
                       </span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block' }}>
                         グローバルスコア
@@ -414,10 +414,10 @@ const TitleDetailPage: React.FC = () => {
                   </div>
                   <div className="card-body">
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {global.region_breakdown.map((region) => (
+                      {(global.regions ?? global.region_breakdown ?? []).map((region) => (
                         <div key={region.region} style={globalStyles.regionRow}>
                           <div style={globalStyles.regionInfo}>
-                            <p style={globalStyles.regionLabel}>{region.region_label}</p>
+                            <p style={globalStyles.regionLabel}>{(region.region_label ?? region.region)}</p>
                             {region.recommended_platforms && region.recommended_platforms.length > 0 && (
                               <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
                                 {region.recommended_platforms.map((p) => (

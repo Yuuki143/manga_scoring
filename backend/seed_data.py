@@ -1132,8 +1132,9 @@ def seed() -> None:
         print("  Creating genre trend data...")
 
         active_genres = set()
-        for _, td in [(p, t) for pub_def in PUBLISHER_DEFS for t in pub_def["titles"]]:
-            active_genres.add(td["genre"])
+        for pub_def in PUBLISHER_DEFS:
+            for td in pub_def["titles"]:
+                active_genres.add(td["genre"])
 
         for genre_enum in active_genres:
             config_entry = GENRE_TREND_CONFIGS.get(genre_enum, {

@@ -75,8 +75,7 @@ class AuditLog(BaseModel):
     __table_args__ = (
         Index("ix_audit_logs_action", "action"),
         Index("ix_audit_logs_resource_type", "resource_type"),
-        Index("ix_audit_logs_user_id", "user_id"),
-        Index("ix_audit_logs_publisher_id", "publisher_id"),
+        # user_id and publisher_id indexes are created by index=True on the columns
         Index("ix_audit_logs_created_at", "created_at"),
         Index("ix_audit_logs_action_resource", "action", "resource_type"),
     )

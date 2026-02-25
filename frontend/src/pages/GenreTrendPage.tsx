@@ -50,6 +50,10 @@ const GenreTrendPage: React.FC = () => {
     fetchGenres();
   }, []);
 
+  const selectedGenreName = (genreId: string) => {
+    return genreList.find((g) => g.genre === genreId)?.label || genreId;
+  };
+
   const fetchRanking = useCallback(async (genre: string) => {
     setLoading(true);
     setError(null);
@@ -70,10 +74,6 @@ const GenreTrendPage: React.FC = () => {
       fetchRanking(selectedGenre);
     }
   }, [selectedGenre, fetchRanking]);
-
-  const selectedGenreName = (genreId: string) => {
-    return genreList.find((g) => g.genre === genreId)?.label || genreId;
-  };
 
   // Chart data for top 10 entries
   const chartData = useMemo(() => {
